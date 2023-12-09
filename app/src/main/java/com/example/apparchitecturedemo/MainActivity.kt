@@ -8,11 +8,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.RecyclerView
 import com.example.apparchitecturedemo.adapter.GameAdapter
-import com.example.apparchitecturedemo.service.GameService
-import com.example.apparchitecturedemo.service.ServiceManager
+import com.example.apparchitecturedemo.model.GameModel
 import com.example.apparchitecturedemo.service.response.GameResponse
-import retrofit2.Call
-import retrofit2.Response
 
 class MainActivity : AppCompatActivity() {
     private lateinit var toolbar: Toolbar
@@ -21,6 +18,8 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var gameAdapter: GameAdapter
 
+    private lateinit var gameModel: GameModel
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -28,6 +27,8 @@ class MainActivity : AppCompatActivity() {
         toolbar = findViewById(R.id.toolbar)
         recyclerView = findViewById(R.id.recycler_view)
         progressBar = findViewById(R.id.progress_bar)
+
+        gameModel = GameModel()
 
         setupToolbar()
         setupRecyclerView()
@@ -56,25 +57,10 @@ class MainActivity : AppCompatActivity() {
     private fun fetchAllGames() {
         showLoading()
 
-        val service = ServiceManager.getInstance().create(GameService::class.java)
-
-        service.getAllGames().enqueue(object : retrofit2.Callback<List<GameResponse>> {
-            override fun onResponse(
-                call: Call<List<GameResponse>>,
-                response: Response<List<GameResponse>>
-            ) {
-                val data = response.body()
-
-                when {
-                    (response.isSuccessful && (data != null)) -> onFetchAllGamesSuccess(data)
-                    else -> onFetchAllGamesError(throw Throwable("Something went wrong."))
-                }
-            }
-
-            override fun onFailure(call: Call<List<GameResponse>>, t: Throwable) {
-                onFetchAllGamesError(t.localizedMessage ?: "Something went wrong.")
-            }
-        })
+        gameModel.getAllGames(
+            onSuccess = ::onFetchAllGamesSuccess,
+            onError = ::onFetchAllGamesError
+        )
     }
 
     private fun onFetchAllGamesSuccess(games: List<GameResponse>) {
