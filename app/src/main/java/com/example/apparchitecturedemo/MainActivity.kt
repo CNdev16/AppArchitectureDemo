@@ -9,9 +9,11 @@ import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.RecyclerView
 import com.example.apparchitecturedemo.adapter.GameAdapter
 import com.example.apparchitecturedemo.model.GameModel
+import com.example.apparchitecturedemo.presenter.MainContract
+import com.example.apparchitecturedemo.presenter.MainPresenter
 import com.example.apparchitecturedemo.service.response.GameResponse
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), MainContract.View {
     private lateinit var toolbar: Toolbar
     private lateinit var recyclerView: RecyclerView
     private lateinit var progressBar: ProgressBar
@@ -19,6 +21,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var gameAdapter: GameAdapter
 
     private lateinit var gameModel: GameModel
+
+    private lateinit var mainPresenter: MainPresenter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,6 +33,7 @@ class MainActivity : AppCompatActivity() {
         progressBar = findViewById(R.id.progress_bar)
 
         gameModel = GameModel()
+        mainPresenter = MainPresenter(this, gameModel)
 
         setupToolbar()
         setupRecyclerView()
@@ -44,43 +49,34 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupRecyclerView() {
         gameAdapter = GameAdapter()
-        gameAdapter.callBack = ::onItemClicked
+        gameAdapter.callBack = mainPresenter::onItemClick
 
         recyclerView.setHasFixedSize(true)
         recyclerView.adapter = gameAdapter
     }
 
-    private fun onItemClicked(item: GameResponse) {
-        Toast.makeText(this, "onItemClicked: ${item.title}", Toast.LENGTH_SHORT).show()
-    }
-
     private fun fetchAllGames() {
-        showLoading()
-
-        gameModel.getAllGames(
-            onSuccess = ::onFetchAllGamesSuccess,
-            onError = ::onFetchAllGamesError
-        )
+        mainPresenter.getAllGames()
     }
 
-    private fun onFetchAllGamesSuccess(games: List<GameResponse>) {
-        hideLoading()
-
+    override fun onFetchAllGamesSuccess(games: List<GameResponse>) {
         gameAdapter.gameItems = games
     }
 
-    private fun onFetchAllGamesError(errorMessage: String) {
-        hideLoading()
-
+    override fun onFetchAllGamesError(errorMessage: String) {
         Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show()
     }
 
-    private fun showLoading() {
+    override fun showLoading() {
         progressBar.visibility = View.VISIBLE
     }
 
-    private fun hideLoading() {
+    override fun hideLoading() {
         progressBar.visibility = View.GONE
+    }
+
+    override fun onItemClicked(name: String) {
+        Toast.makeText(this, "onItemClicked: $name", Toast.LENGTH_SHORT).show()
     }
 
     companion object {
